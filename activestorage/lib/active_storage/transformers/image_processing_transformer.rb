@@ -1,21 +1,24 @@
 # frozen_string_literal: true
 
-require "image_processing"
-
 module ActiveStorage
   module Transformers
     class ImageProcessingTransformer < Transformer
-      private
-        def process(file, format:)
-          processor.
-            source(file).
-            loader(page: 0).
-            convert(format).
-            apply(operations).
-            call
-        end
+      def self.accept?(blob)
+        ActiveStorage.variable_content_types.include?(blob.content_type)
+      end
 
+      def process(file, format:)
+        processor.
+          source(file).
+          loader(page: 0).
+          convert(format).
+          apply(operations).
+          call
+      end
+
+      private
         def processor
+          require "image_processing" unless defined?(ImageProcessing)
           ImageProcessing.const_get(ActiveStorage.variant_processor.to_s.camelize)
         end
 

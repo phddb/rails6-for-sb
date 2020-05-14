@@ -44,12 +44,12 @@ class ActiveStorage::Variation
   end
 
   # Accepts a File object, performs the +transformations+ against it, and
-  # saves the transformed image into a temporary file. If +format+ is specified
-  # it will be the format of the result image, otherwise the result image
+  # saves the result into a temporary file. If +format+ is specified
+  # it will be the format of the result, otherwise the result
   # retains the source format.
-  def transform(file, format: nil, &block)
+  def transform(blob, file, format: nil, &block)
     ActiveSupport::Notifications.instrument("transform.active_storage") do
-      transformer.transform(file, format: format, &block)
+      transformer(blob).transform(file, format: format, &block)
     end
   end
 
@@ -63,22 +63,11 @@ class ActiveStorage::Variation
   end
 
   private
-    def transformer
-      if ActiveStorage.variant_processor
-        begin
-          require "image_processing"
-        rescue LoadError
-          ActiveSupport::Deprecation.warn <<~WARNING.squish
-            Generating image variants will require the image_processing gem in Rails 6.1.
-            Please add `gem 'image_processing', '~> 1.2'` to your Gemfile.
-          WARNING
+    def transformer(blob)
+      transformer_class(blob).new(transformations)
+    end
 
-          ActiveStorage::Transformers::MiniMagickTransformer.new(transformations)
-        else
-          ActiveStorage::Transformers::ImageProcessingTransformer.new(transformations)
-        end
-      else
-        ActiveStorage::Transformers::MiniMagickTransformer.new(transformations)
-      end
+    def transformer_class(blob)
+      ActiveStorage.transformers.detect { |klass| klass.accept?(blob) }
     end
 end

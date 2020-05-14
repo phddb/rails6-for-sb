@@ -129,4 +129,19 @@ class Group < ActiveRecord::Base
   has_many :users, autosave: true
 end
 
+class FfmpegTransformer < ActiveStorage::Transformers::Transformer
+  def self.accept?(blob)
+    blob.video? || blob.audio?
+  end
+
+  def transform(input, format:)
+    format ||= File.extname(input.path)
+    options = transformations[:ffmpeg_opts]
+    create_tempfile(ext: format) do |output|
+      system "ffmpeg -y -i #{input.path} #{options} #{output.path}"
+      yield output
+    end
+  end
+end
+
 require_relative "../../tools/test_common"

@@ -507,10 +507,10 @@ Image analysis provides `width` and `height` attributes. Video analysis provides
 
 Analysis requires the `mini_magick` gem. Video analysis also requires the [FFmpeg](https://www.ffmpeg.org/) library, which you must include separately.
 
-Transforming Images
--------------------
+Transforming Files
+------------------
 
-To enable variants, add the `image_processing` gem to your `Gemfile`:
+To enable image variants, add the `image_processing` gem to your `Gemfile`:
 
 ```ruby
 gem 'image_processing'
@@ -532,6 +532,32 @@ To switch to the Vips processor, you would add the following to
 ```ruby
 # Use Vips for processing variants.
 config.active_storage.variant_processor = :vips
+```
+
+Additional media types, such as audio or video files, can be transformed by
+registering custom transformers in an initializer:
+```ruby
+Rails.application.config.active_storage.transformers << FfmpegTransformer
+# => [ ActiveStorage::Transformers::ImageProcessingTransformer, FfmpegTransformer ]
+
+class FfmpegTransformer < ActiveStorage::Transformers::Transformer
+  def self.accept?(blob)
+    blob.video? || blob.audio?
+  end
+
+  def transform(input, format:)
+    format ||= File.extname(input.path)
+    options = transformations[:ffmpeg_opts]
+    create_tempfile(ext: format) do |output|
+      system "ffmpeg -y -i #{input.path} #{options} #{output.path}"
+      yield output
+    end
+  end
+end
+```
+
+```erb
+<%= image_tag user.my_audio.variant(ffmpeg_opts: "-af silenceremove=stop_periods=-1:stop_duration=1:stop_threshold=-90dB") %>
 ```
 
 Previewing Files
