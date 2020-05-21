@@ -58,10 +58,15 @@ class ActiveStorage::VariantWithRecordTest < ActiveSupport::TestCase
   end
 
   test "video is invariable without custom transformer" do
+    @orig_transformers = ActiveStorage.transformers
+    ActiveStorage.transformers = [ActiveStorage::Transformers::ImageProcessingTransformer]
+
     blob = create_file_blob(filename: "video.mp4")
     assert_raises ActiveStorage::InvariableError do
       blob.variant({}).processed
     end
+  ensure
+    ActiveStorage.transformers = @orig_transformers
   end
 
   test "video is twice longer using custom transformer" do
