@@ -832,6 +832,12 @@ module ActionDispatch
       def call(env)
         req = make_request(env)
         req.path_info = Journey::Router::Utils.normalize_path(req.path_info)
+        # Rails.logger.debug "route_set.rb: 835: #{req.to_s} #{req.path_info}"
+        
+        # if req.path == "/pluginv1/addToLocalIRLibrary"
+        #   byebug
+        # end
+        
         @router.serve(req)
       end
 

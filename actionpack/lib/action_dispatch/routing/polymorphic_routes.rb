@@ -271,7 +271,7 @@ module ActionDispatch
 
             [named_route, args]
           end
-
+          
           def handle_model_call(target, record)
             if mapping = polymorphic_mapping(target, record)
               mapping.call(target, [record], suffix == "path")
