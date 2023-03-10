@@ -1,3 +1,5 @@
+* This is a fork of rails 6 that allows variants of audio files to be create. The heavy lifting was done by @sedubois; minor additions by me.
+
 # Welcome to Rails
 
 ## What's Rails?
